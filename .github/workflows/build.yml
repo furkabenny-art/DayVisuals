@@ -13,43 +13,44 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.7
+
       - name: Build Pure Project From Archive Only
         run: |
-          # 1. Создаём файл настроек settings.gradle с указанием репозиториев для плагинов
+          # 1. Создаём файл настроек settings.gradle с нужными репозиториями
           cat << 'EOF' > settings.gradle
           pluginManagement {
               repositories {
-                  maven { url "https://fabricmc.net" }
+                  maven { url "https://maven.fabricmc.net/" }
                   mavenCentral()
                   gradlePluginPortal()
               }
           }
           EOF
           
-          # 2. Скачиваем официальный легковесный компилятор Gradle
-          gradle wrapper --gradle-version 8.7
-          
-          # 3. Создаём правильную структуру папок для Fabric-мода 1.21.11
+          # 2. Создаём структуру папок для Fabric-мода 1.21.11
           mkdir -p src/main/java/dayvisuals
           mkdir -p src/main/resources
           
-          # 4. Распаковываем твой архив со всеми исходниками
+          # 3. Распаковываем твой архив со всеми исходниками
           unzip dayvisuals.zip -d temp_src
           
-          # 5. Переносим твои 5 файлов из подпапки dayvisuals в нужные места проекта
+          # 4. Переносим файлы из подпапки dayvisuals в проект
           cp temp_src/dayvisuals/*.java src/main/java/dayvisuals/
           cp temp_src/dayvisuals/*.json src/main/resources/
           
-          # 6. Создаём файл сборки build.gradle с плагином Fabric Loom
+          # 5. Создаём файл сборки build.gradle с плагином Fabric Loom
           cat << 'EOF' > build.gradle
           plugins {
               id 'fabric-loom' version '1.7-SNAPSHOT'
-              id 'maven-publish'
           }
           version = '1.0.0'
           group = 'net.dayvisuals'
           repositories {
-              maven { url "https://fabricmc.net" }
+              maven { url "https://maven.fabricmc.net/" }
               mavenCentral()
           }
           dependencies {
@@ -60,15 +61,14 @@ jobs:
           }
           EOF
           
-          # 7. Создаём файл настроек gradle.properties
+          # 6. Создаём файл настроек gradle.properties
           cat << 'EOF' > gradle.properties
           org.gradle.jvmargs=-Xmx2G
           EOF
 
       - name: Compile Jar Mod
         run: |
-          chmod +x gradlew
-          ./gradlew build --no-daemon
+          gradle build --no-daemon
 
       - name: Upload DayVisuals Mod Jar
         uses: actions/upload-artifact@v4
