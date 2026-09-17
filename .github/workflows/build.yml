@@ -1,0 +1,36 @@
+name: Build DayVisuals
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Create Structure and Unzip
+        run: |
+          mkdir -p src/main/java/dayvisuals src/main/resources
+          unzip dayvisuals.zip -d temp_unzip
+          cp temp_unzip/*.java src/main/java/dayvisuals/
+          cp temp_unzip/*.json src/main/resources/
+      - name: Setup Fabric Template
+        run: |
+          git clone --depth 1 https://github.com template
+          cp -r src template/
+          cp template/src/main/resources/fabric.mod.json src/main/resources/ || true
+          cd template
+          sed -i 's/1.21/1.21.11/g' build.gradle || true
+      - name: Build Mod with Gradle
+        run: |
+          cd template
+          chmod +x gradlew
+          ./gradlew build
+      - name: Upload Finished Mod
+        uses: actions/upload-artifact@v4
+        with:
+          name: DayVisuals-Jar
+          path: template/build/libs/*-1.0.0.jar
