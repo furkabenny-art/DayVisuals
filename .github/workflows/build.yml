@@ -13,22 +13,30 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Initialize Lightweight Fabric Project
+      - name: Setup Fabric Project Without Git Clone
         run: |
-          git clone --depth 1 https://github.com fabric-project
-          cd fabric-project
+          # Скачиваем готовый пустой zip-архив с официального репозитория Fabric напрямую
+          curl -L https://github.com -o template.zip
+          unzip template.zip
+          mv fabric-example-mod-1.21 fabric-project
           
+          cd fabric-project
+          # Полностью вычищаем стандартный код шаблона
           rm -rf src/main/java/*
           rm -rf src/main/resources/*
           
+          # Создаем чистые папки для твоего софта DayVisuals
           mkdir -p src/main/java/dayvisuals
           mkdir -p src/main/resources
           
+          # Аккуратно распаковываем твой загруженный dayvisuals.zip
           unzip ../dayvisuals.zip -d ../temp_src
           
+          # Раскладываем твои 5 файлов по нужным системным папкам
           cp ../temp_src/*.java src/main/java/dayvisuals/
           cp ../temp_src/*.json src/main/resources/
           
+          # Жестко прописываем твою версию 1.21.11 в конфигурации сборщика
           sed -i 's/"minecraft": ">=1.21"/"minecraft": "1.21.11"/g' src/main/resources/fabric.mod.json || true
           sed -i 's/1.21/1.21.11/g' build.gradle || true
 
