@@ -13,10 +13,12 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Setup Gradle
+      - name: Setup Gradle 8.8
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: 8.10
+          gradle-version: 8.8
+          # Отключаем проблемный плагин перехвата логов, чтобы сборка не крашилась
+          add-job-summary: false
 
       - name: Build Pure Project From Archive Only
         run: |
