@@ -22,7 +22,7 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Inject Your Visuals Code
+      - name: Inject and Patch Your Visuals Code
         run: |
           cd fabric-project
           rm -rf src/main/java/*
@@ -31,14 +31,68 @@ jobs:
           mkdir -p src/main/java/dayvisuals
           mkdir -p src/main/resources
           
-          # Сначала распаковываем оставшиеся конфиги и миксины из твоего старого ZIP
-          unzip ../my-repo/dayvisuals.zip -d ../temp_src || true
+          # Распаковываем твой оригинальный архив
+          unzip ../my-repo/dayvisuals.zip -d ../temp_src
+          
+          # Копируем конфигурационные файлы и миксины
           cp ../temp_src/dayvisuals/*.json src/main/resources/ || true
           cp ../temp_src/dayvisuals/*Mixin.java src/main/java/dayvisuals/ || true
           
-          # А главный исправленный файл копируем напрямую из репозитория, заменяя кривой из архива
-          cp ../my-repo/DayVisuals.java src/main/java/dayvisuals/
+          # Автоматически исправляем опечатки и закрываем скобку в коде DayVisuals.java прямо в памяти сервера
+          cat << 'EOF' > src/main/java/dayvisuals/DayVisuals.java
+          package dayvisuals;
+
+          import net.fabricmc.api.ModInitializer;
+          import net.minecraft.client.MinecraftClient;
+          import net.minecraft.client.gui.DrawContext;
+          import net.minecraft.client.render.*;
+          import net.minecraft.client.util.math.MatrixStack;
+          import net.minecraft.entity.LivingEntity;
+          import net.minecraft.entity.player.PlayerEntity;
+          import net.minecraft.util.math.Box;
+          import net.minecraft.util.math.Vec3d;
+          import org.joml.Matrix4f;
+          import org.joml.Vector3f;
+          import org.slf4j.Logger;
+          import org.slf4j.LoggerFactory;
+          import java.awt.Color;
+          import java.util.List;
+
+          public class DayVisuals implements ModInitializer {
+              public static final String MOD_ID = "dayvisuals";
+              public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+              private static final MinecraftClient mc = MinecraftClient.getInstance();
+              public static LivingEntity currentTarget = null;
+              public static Vec3d gpsDestination = new Vec3d(0, 64, 0); 
+
+              @Override
+              public void onInitialize() {
+                  LOGGER.info("[DayVisuals] Мод успешно загружен для версии 1.21.11!");
+              }
+
+              private static void updateTarget() {
+                  if (mc.world == null || mc.player == null) { currentTarget = null; return; }
+                  if (mc.targetedEntity instanceof LivingEntity) { currentTarget = (LivingEntity) mc.targetedEntity; return; }
+                  List<PlayerEntity> players = mc.world.getPlayers();
+                  LivingEntity closest = null; double closestDist = 6.0;
+                  for (PlayerEntity player : players) {
+                      if (player == mc.player || player.isDead()) continue;
+                      double dist = mc.player.getDistanceToGeom(player.getPos());
+                      if (dist  14) name = name.substring(0, 12) + "..";
+                  context.drawText(mc.textRenderer, name, x + 6, y + 6, -1, false);
+                  float health = entity.getHealth(); float maxHealth = entity.getMaxHealth();
+                  float healthHp = Math.min(health, maxHealth); float healthPercent = healthHp / maxHealth;
+                  Color hpColor = Color.getHSBColor(healthPercent * 0.33f, 1.0f, 1.0f);
+                  int barWidth = (int) ((width - 12) * healthPercent);
+                  context.fill(x + 6, y + 22, x + 6 + (width - 12), y + 28, new Color(30, 30, 30, 255).getRGB());
+                  context.fill(x + 6, y + 22, x + 6 + barWidth, y + 28, hpColor.getRGB());
+                  String hpText = String.format("%.1f HP", healthHp);
+                  context.drawText(mc.textRenderer, hpText, x + width - mc.textRenderer.getWidth(hpText) - 6, y + 6, hpColor.getRGB(), false);
+              }
+          }
+          EOF
           
+          # Настраиваем версии под 1.21.11
           sed -i 's/"minecraft": ">=1.21"/"minecraft": "1.21.11"/g' src/main/resources/fabric.mod.json || true
           sed -i 's/1.21/1.21.11/g' build.gradle || true
 
@@ -53,3 +107,4 @@ jobs:
         with:
           name: DayVisuals-Jar
           path: fabric-project/build/libs/*-1.0.0.jar
+          
