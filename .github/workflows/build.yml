@@ -18,22 +18,17 @@ jobs:
           git clone --depth 1 https://github.com fabric-project
           cd fabric-project
           
-          # Очищаем стандартные исходники шаблона
           rm -rf src/main/java/*
           rm -rf src/main/resources/*
           
-          # Создаем правильную структуру пакетов для 1.21.11
           mkdir -p src/main/java/dayvisuals
           mkdir -p src/main/resources
           
-          # Распаковываем твой архив во временную папку
           unzip ../dayvisuals.zip -d ../temp_src
           
-          # Раскладываем файлы строго по своим местам
           cp ../temp_src/*.java src/main/java/dayvisuals/
           cp ../temp_src/*.json src/main/resources/
           
-          # Меняем версию конфигурации под 1.21.11
           sed -i 's/"minecraft": ">=1.21"/"minecraft": "1.21.11"/g' src/main/resources/fabric.mod.json || true
           sed -i 's/1.21/1.21.11/g' build.gradle || true
 
