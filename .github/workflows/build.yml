@@ -22,7 +22,7 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Inject and Patch Your Visuals Code
+      - name: Inject and Build Visuals
         run: |
           cd fabric-project
           rm -rf src/main/java/*
@@ -31,14 +31,12 @@ jobs:
           mkdir -p src/main/java/dayvisuals
           mkdir -p src/main/resources
           
-          # Распаковываем твой оригинальный архив
+          # Распаковываем конфигурации мода и миксины из твоего zip-архива
           unzip ../my-repo/dayvisuals.zip -d ../temp_src
-          
-          # Копируем конфигурационные файлы и миксины
           cp ../temp_src/dayvisuals/*.json src/main/resources/ || true
           cp ../temp_src/dayvisuals/*Mixin.java src/main/java/dayvisuals/ || true
           
-          # Автоматически исправляем опечатки и закрываем скобку в коде DayVisuals.java прямо в памяти сервера
+          # Записываем гарантированно чистый Java-код без опечаток
           cat << 'EOF' > src/main/java/dayvisuals/DayVisuals.java
           package dayvisuals;
 
@@ -92,7 +90,7 @@ jobs:
           }
           EOF
           
-          # Настраиваем версии под 1.21.11
+          # Корректируем версию под Minecraft 1.21.11 Fabric
           sed -i 's/"minecraft": ">=1.21"/"minecraft": "1.21.11"/g' src/main/resources/fabric.mod.json || true
           sed -i 's/1.21/1.21.11/g' build.gradle || true
 
