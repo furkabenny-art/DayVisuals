@@ -15,7 +15,7 @@ jobs:
 
       - name: Build Pure Project From Archive Only
         run: |
-          # 1. Сначала создаём пустой файл настроек settings.gradle, чтобы Gradle не ругался
+          # 1. Создаём пустой файл настроек settings.gradle
           touch settings.gradle
           
           # 2. Скачиваем официальный легковесный компилятор Gradle
@@ -28,9 +28,9 @@ jobs:
           # 4. Распаковываем твой архив со всеми исходниками
           unzip dayvisuals.zip -d temp_src
           
-          # 5. Переносим твои 5 файлов в нужные места
-          cp temp_src/*.java src/main/java/dayvisuals/
-          cp temp_src/*.json src/main/resources/
+          # 5. Переносим твои 5 файлов из подпапки dayvisuals в нужные места проекта
+          cp temp_src/dayvisuals/*.java src/main/java/dayvisuals/
+          cp temp_src/dayvisuals/*.json src/main/resources/
           
           # 6. Создаём файл сборки build.gradle с плагином Fabric Loom
           cat << 'EOF' > build.gradle
