@@ -4,13 +4,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # 1. Скачиваем файлы ТВОЕГО репозитория (где лежит dayvisuals.zip)
       - name: Checkout Your Code
         uses: actions/checkout@v4
         with:
           path: my-repo
 
-      # 2. Скачиваем ОФИЦИАЛЬНЫЙ шаблон Fabric напрямую через серверный клон (без скачивания zip)
       - name: Checkout Official Fabric Template
         uses: actions/checkout@v4
         with:
@@ -18,45 +16,38 @@ jobs:
           ref: '1.21'
           path: fabric-project
 
-      # 3. Настраиваем Java 21
       - name: Setup Java 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
-      # 4. Переносим твои файлы внутрь официального шаблона
       - name: Inject Your Visuals Code
         run: |
           cd fabric-project
-          
-          # Полностью очищаем стандартный код шаблона
           rm -rf src/main/java/*
           rm -rf src/main/resources/*
           
-          # Создаем чистые папки под твои пакеты
           mkdir -p src/main/java/dayvisuals
           mkdir -p src/main/resources
           
-          # Распаковываем твой архив dayvisuals.zip из твоей папки
-          unzip ../my-repo/dayvisuals.zip -d ../temp_src
+          # Сначала распаковываем оставшиеся конфиги и миксины из твоего старого ZIP
+          unzip ../my-repo/dayvisuals.zip -d ../temp_src || true
+          cp ../temp_src/dayvisuals/*.json src/main/resources/ || true
+          cp ../temp_src/dayvisuals/*Mixin.java src/main/java/dayvisuals/ || true
           
-          # Раскладываем твои 5 файлов по нужным системным папкам
-          cp ../temp_src/dayvisuals/*.java src/main/java/dayvisuals/
-          cp ../temp_src/dayvisuals/*.json src/main/resources/
+          # А главный исправленный файл копируем напрямую из репозитория, заменяя кривой из архива
+          cp ../my-repo/DayVisuals.java src/main/java/dayvisuals/
           
-          # Жестко прописываем версию 1.21.11 в официальных файлах конфигурации
           sed -i 's/"minecraft": ">=1.21"/"minecraft": "1.21.11"/g' src/main/resources/fabric.mod.json || true
           sed -i 's/1.21/1.21.11/g' build.gradle || true
 
-      # 5. Запускаем компиляцию мода
       - name: Compile Jar Mod via Template Gradle
         run: |
           cd fabric-project
           chmod +x gradlew
           ./gradlew build --no-daemon
 
-      # 6. Сохраняем готовый .jar файл
       - name: Upload DayVisuals Mod Jar
         uses: actions/upload-artifact@v4
         with:
