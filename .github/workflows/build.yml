@@ -15,21 +15,24 @@ jobs:
 
       - name: Build Pure Project From Archive Only
         run: |
-          # 1. Скачиваем официальный легковесный компилятор Gradle
+          # 1. Сначала создаём пустой файл настроек settings.gradle, чтобы Gradle не ругался
+          touch settings.gradle
+          
+          # 2. Скачиваем официальный легковесный компилятор Gradle
           gradle wrapper --gradle-version 8.7
           
-          # 2. Создаём правильную структуру папок для Fabric-мода 1.21.11
+          # 3. Создаём правильную структуру папок для Fabric-мода 1.21.11
           mkdir -p src/main/java/dayvisuals
           mkdir -p src/main/resources
           
-          # 3. Распаковываем твой архив со всеми исходниками
+          # 4. Распаковываем твой архив со всеми исходниками
           unzip dayvisuals.zip -d temp_src
           
-          # 4. Переносим твои 5 файлов в нужные места
+          # 5. Переносим твои 5 файлов в нужные места
           cp temp_src/*.java src/main/java/dayvisuals/
           cp temp_src/*.json src/main/resources/
           
-          # 5. Автоматически создаём минимальный файл сборки build.gradle, чтобы ничего не скачивать
+          # 6. Создаём файл сборки build.gradle с плагином Fabric Loom
           cat << 'EOF' > build.gradle
           plugins {
               id 'fabric-loom' version '1.7-SNAPSHOT'
@@ -38,7 +41,7 @@ jobs:
           version = '1.0.0'
           group = 'net.dayvisuals'
           repositories {
-              maven { url "https://maven.fabricmc.net/" }
+              maven { url "https://fabricmc.net" }
               mavenCentral()
           }
           dependencies {
@@ -49,7 +52,7 @@ jobs:
           }
           EOF
           
-          # 6. Создаём файл настроек gradle.properties
+          # 7. Создаём файл настроек gradle.properties
           cat << 'EOF' > gradle.properties
           org.gradle.jvmargs=-Xmx2G
           EOF
