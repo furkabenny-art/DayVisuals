@@ -16,7 +16,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: 8.7
+          gradle-version: 8.10
 
       - name: Build Pure Project From Archive Only
         run: |
@@ -24,7 +24,7 @@ jobs:
           cat << 'EOF' > settings.gradle
           pluginManagement {
               repositories {
-                  maven { url "https://maven.fabricmc.net/" }
+                  maven { url "https://fabricmc.net" }
                   mavenCentral()
                   gradlePluginPortal()
               }
@@ -50,7 +50,7 @@ jobs:
           version = '1.0.0'
           group = 'net.dayvisuals'
           repositories {
-              maven { url "https://maven.fabricmc.net/" }
+              maven { url "https://fabricmc.net" }
               mavenCentral()
           }
           dependencies {
@@ -75,4 +75,4 @@ jobs:
         with:
           name: DayVisuals-Jar
           path: build/libs/*-1.0.0.jar
-          
+         
