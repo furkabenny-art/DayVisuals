@@ -15,8 +15,16 @@ jobs:
 
       - name: Build Pure Project From Archive Only
         run: |
-          # 1. Создаём пустой файл настроек settings.gradle
-          touch settings.gradle
+          # 1. Создаём файл настроек settings.gradle с указанием репозиториев для плагинов
+          cat << 'EOF' > settings.gradle
+          pluginManagement {
+              repositories {
+                  maven { url "https://fabricmc.net" }
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          EOF
           
           # 2. Скачиваем официальный легковесный компилятор Gradle
           gradle wrapper --gradle-version 8.7
