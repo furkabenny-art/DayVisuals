@@ -13,41 +13,55 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Setup Fabric Project Without Git Clone
+      - name: Build Pure Project From Archive Only
         run: |
-          # Скачиваем готовый пустой zip-архив с официального репозитория Fabric напрямую
-          curl -L https://github.com -o template.zip
-          unzip template.zip
-          mv fabric-example-mod-1.21 fabric-project
+          # 1. Скачиваем официальный легковесный компилятор Gradle
+          gradle wrapper --gradle-version 8.7
           
-          cd fabric-project
-          # Полностью вычищаем стандартный код шаблона
-          rm -rf src/main/java/*
-          rm -rf src/main/resources/*
-          
-          # Создаем чистые папки для твоего софта DayVisuals
+          # 2. Создаём правильную структуру папок для Fabric-мода 1.21.11
           mkdir -p src/main/java/dayvisuals
           mkdir -p src/main/resources
           
-          # Аккуратно распаковываем твой загруженный dayvisuals.zip
-          unzip ../dayvisuals.zip -d ../temp_src
+          # 3. Распаковываем твой архив со всеми исходниками
+          unzip dayvisuals.zip -d temp_src
           
-          # Раскладываем твои 5 файлов по нужным системным папкам
-          cp ../temp_src/*.java src/main/java/dayvisuals/
-          cp ../temp_src/*.json src/main/resources/
+          # 4. Переносим твои 5 файлов в нужные места
+          cp temp_src/*.java src/main/java/dayvisuals/
+          cp temp_src/*.json src/main/resources/
           
-          # Жестко прописываем твою версию 1.21.11 в конфигурации сборщика
-          sed -i 's/"minecraft": ">=1.21"/"minecraft": "1.21.11"/g' src/main/resources/fabric.mod.json || true
-          sed -i 's/1.21/1.21.11/g' build.gradle || true
+          # 5. Автоматически создаём минимальный файл сборки build.gradle, чтобы ничего не скачивать
+          cat << 'EOF' > build.gradle
+          plugins {
+              id 'fabric-loom' version '1.7-SNAPSHOT'
+              id 'maven-publish'
+          }
+          version = '1.0.0'
+          group = 'net.dayvisuals'
+          repositories {
+              maven { url "https://maven.fabricmc.net/" }
+              mavenCentral()
+          }
+          dependencies {
+              minecraft "com.mojang:minecraft:1.21.11"
+              mappings "net.fabricmc:yarn:1.21.11+build.1:v2"
+              modImplementation "net.fabricmc:fabric-loader:0.15.11"
+              modImplementation "net.fabricmc.fabric-api:fabric-api:0.102.0+1.21.11"
+          }
+          EOF
+          
+          # 6. Создаём файл настроек gradle.properties
+          cat << 'EOF' > gradle.properties
+          org.gradle.jvmargs=-Xmx2G
+          EOF
 
-      - name: Compile Jar via Gradle
+      - name: Compile Jar Mod
         run: |
-          cd fabric-project
           chmod +x gradlew
           ./gradlew build --no-daemon
 
-      - name: Upload DayVisuals Mod
+      - name: Upload DayVisuals Mod Jar
         uses: actions/upload-artifact@v4
         with:
           name: DayVisuals-Jar
-          path: fabric-project/build/libs/*-1.0.0.jar
+          path: build/libs/*-1.0.0.jar
+          
