@@ -4,24 +4,33 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      # 1. Скачиваем файлы ТВОЕГО репозитория (где лежит dayvisuals.zip)
+      - name: Checkout Your Code
         uses: actions/checkout@v4
+        with:
+          path: my-repo
 
+      # 2. Скачиваем ОФИЦИАЛЬНЫЙ шаблон Fabric напрямую через серверный клон (без скачивания zip)
+      - name: Checkout Official Fabric Template
+        uses: actions/checkout@v4
+        with:
+          repository: FabricMC/fabric-example-mod
+          ref: '1.21'
+          path: fabric-project
+
+      # 3. Настраиваем Java 21
       - name: Setup Java 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Download and Setup Official Template
+      # 4. Переносим твои файлы внутрь официального шаблона
+      - name: Inject Your Visuals Code
         run: |
-          # Скачиваем стабильный легковесный шаблон проекта Fabric
-          curl -L https://github.com -o project.zip
-          unzip project.zip
-          mv fabric-example-mod-1.21 project-dir
+          cd fabric-project
           
-          cd project-dir
-          # Вычищаем дефолтные файлы шаблона
+          # Полностью очищаем стандартный код шаблона
           rm -rf src/main/java/*
           rm -rf src/main/resources/*
           
@@ -29,8 +38,8 @@ jobs:
           mkdir -p src/main/java/dayvisuals
           mkdir -p src/main/resources
           
-          # Распаковываем твой архив dayvisuals.zip
-          unzip ../dayvisuals.zip -d ../temp_src
+          # Распаковываем твой архив dayvisuals.zip из твоей папки
+          unzip ../my-repo/dayvisuals.zip -d ../temp_src
           
           # Раскладываем твои 5 файлов по нужным системным папкам
           cp ../temp_src/dayvisuals/*.java src/main/java/dayvisuals/
@@ -40,14 +49,16 @@ jobs:
           sed -i 's/"minecraft": ">=1.21"/"minecraft": "1.21.11"/g' src/main/resources/fabric.mod.json || true
           sed -i 's/1.21/1.21.11/g' build.gradle || true
 
+      # 5. Запускаем компиляцию мода
       - name: Compile Jar Mod via Template Gradle
         run: |
-          cd project-dir
+          cd fabric-project
           chmod +x gradlew
           ./gradlew build --no-daemon
 
+      # 6. Сохраняем готовый .jar файл
       - name: Upload DayVisuals Mod Jar
         uses: actions/upload-artifact@v4
         with:
           name: DayVisuals-Jar
-          path: project-dir/build/libs/*-1.0.0.jar
+          path: fabric-project/build/libs/*-1.0.0.jar
