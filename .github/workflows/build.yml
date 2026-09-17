@@ -6,31 +6,45 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
       - name: Setup Java 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
-      - name: Create Structure and Unzip
+
+      - name: Initialize Lightweight Fabric Project
         run: |
-          mkdir -p src/main/java/dayvisuals src/main/resources
-          unzip dayvisuals.zip -d temp_unzip
-          cp temp_unzip/*.java src/main/java/dayvisuals/
-          cp temp_unzip/*.json src/main/resources/
-      - name: Setup Fabric Template
-        run: |
-          git clone --depth 1 https://github.com template
-          cp -r src template/
-          cp template/src/main/resources/fabric.mod.json src/main/resources/ || true
-          cd template
+          git clone --depth 1 https://github.com fabric-project
+          cd fabric-project
+          
+          # Очищаем стандартные исходники шаблона
+          rm -rf src/main/java/*
+          rm -rf src/main/resources/*
+          
+          # Создаем правильную структуру пакетов для 1.21.11
+          mkdir -p src/main/java/dayvisuals
+          mkdir -p src/main/resources
+          
+          # Распаковываем твой архив во временную папку
+          unzip ../dayvisuals.zip -d ../temp_src
+          
+          # Раскладываем файлы строго по своим местам
+          cp ../temp_src/*.java src/main/java/dayvisuals/
+          cp ../temp_src/*.json src/main/resources/
+          
+          # Меняем версию конфигурации под 1.21.11
+          sed -i 's/"minecraft": ">=1.21"/"minecraft": "1.21.11"/g' src/main/resources/fabric.mod.json || true
           sed -i 's/1.21/1.21.11/g' build.gradle || true
-      - name: Build Mod with Gradle
+
+      - name: Compile Jar via Gradle
         run: |
-          cd template
+          cd fabric-project
           chmod +x gradlew
-          ./gradlew build
-      - name: Upload Finished Mod
+          ./gradlew build --no-daemon
+
+      - name: Upload DayVisuals Mod
         uses: actions/upload-artifact@v4
         with:
           name: DayVisuals-Jar
-          path: template/build/libs/*-1.0.0.jar
+          path: fabric-project/build/libs/*-1.0.0.jar
